@@ -24,6 +24,7 @@ class Point(ABC):
     @property
     def time(self):
         return self._time
+
     @time.setter
     def time(self, time):
         if time > 0:
@@ -36,11 +37,11 @@ class Point(ABC):
         return self.time <= other.time
 
 
-
 class LineSegment(ABC):
     """ Абстрактний клас відрізка"""
 
     type_ls = ""
+
     def __init__(self, A, B):
         if (not isinstance(A, Point)) or (not isinstance(B, Point)):
             raise TypeError('Args must be Point.')
@@ -50,9 +51,9 @@ class LineSegment(ABC):
         else:
             raise ValueError("Begin, End, End - Begin  must be positive.")
 
-    def length():
+    def length(self):
         """довжина відрізка у секундах"""
-        return B.time - A.time
+        return self._B.time - self._A.time
 
     def __le__(self, other):
         """оператор порівняння менше рівне"""
@@ -68,11 +69,11 @@ class WorkLineSegment(LineSegment):
     def set_type(self):
         self.type_ls = "Work"
 
+
 class PauseLineSegment(LineSegment):
     """Відрізок паузи"""
     def set_type(self):
         self.type_ls = "Pause"
-
 
 
 if __name__ == "__main__":
