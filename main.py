@@ -9,6 +9,7 @@ from abc import ABC
 
 # common.ee()
 
+
 class Point(ABC):
     """
     timestamp в секундах
@@ -78,13 +79,46 @@ class PauseLineSegment(LineSegment):
 
 if __name__ == "__main__":
     print("Початок")
-    # config.time_graph =
     print("Time good", Point(1165615616551))
-    # print("Time bad", Point("fds"))
-    # print("Time bad", Point(-1165615616551))
     line_segment1 = WorkLineSegment(Point(1165615616551), Point(1165615616552))
     line_segment1.set_type()
     print("Type", line_segment1.type_ls)
-##    line_segment2 = LineSegment(Point(1), Point(2))
-##    line_segment2.set_type()
+
+    # Input data
+    # ==========
+
+    # 1.	Timestamp початку
+    begin_point = 1
+    # 2.	Чи час виконання в годинах, чи ні (inHours, boolean)
+    in_hours = False
+    #
+    if in_hours:
+        print("Duration in hours.")
+        end_point = None
+        # Тривалисть
+
+    else:
+        # 3 Timestamp закінчення
+        end_point = 10
+        # Тривалисть
+        duration = end_point - begin_point
+
+    # --------------
+    # optional input
+    # --------------
+
+    # 1.	Один, або декілька неробочих періодів (downtimes)
+    downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
+    # 2.	Timestamp паузи
+    pause = None  # or pause = Point(3)  # or pause = Point(8)
+    # 3.	Timestamp відновлення (resume)
+    resume = None  # or  resume = Point(5)  # or resume = Point(9)
+    # =======
+    if downtimes and pause is None and resume is None:
+        print("Work with downtimes")
+    elif not downtimes and pause and resume is None:
+        print("Work with pause")
+    elif not downtimes and pause is None and resume:
+        print("Work with resume")
+    res = []
     print("Фініш")
