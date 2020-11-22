@@ -34,8 +34,15 @@ class Point(ABC):
             raise ValueError('Arg must be positive.')
 
     def __le__(self, other):
-        """оператор порівняння менше рівне"""
+        """операція порівняння менше рівне"""
         return self.time <= other.time
+
+    def __sub__(self, other):
+        """операція віднімання"""
+        return self.time - other.time
+
+    def __repr__(self):
+        return "Point " + str(self._time)
 
 
 class LineSegment(ABC):
@@ -84,11 +91,14 @@ if __name__ == "__main__":
     line_segment1.set_type()
     print("Type", line_segment1.type_ls)
 
+    # Результат
+    timegraph = []
+
     # Input data
     # ==========
 
     # 1.	Timestamp початку
-    begin_point = 1
+    begin_point = Point(1)
     # 2.	Чи час виконання в годинах, чи ні (inHours, boolean)
     in_hours = False
     #
@@ -99,7 +109,7 @@ if __name__ == "__main__":
 
     else:
         # 3 Timestamp закінчення
-        end_point = 10
+        end_point = Point(11)
         # Тривалисть
         duration = end_point - begin_point
 
@@ -108,17 +118,51 @@ if __name__ == "__main__":
     # --------------
 
     # 1.	Один, або декілька неробочих періодів (downtimes)
-    downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
+    # downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
+    downtimes = []
     # 2.	Timestamp паузи
-    pause = None  # or pause = Point(3)  # or pause = Point(8)
+    # pause = None  # or pause = Point(3)  # or pause = Point(8)
+    pause = Point(3)
     # 3.	Timestamp відновлення (resume)
     resume = None  # or  resume = Point(5)  # or resume = Point(9)
+    # resume = Point(5)
     # =======
     if downtimes and pause is None and resume is None:
         print("Work with downtimes")
+        # Робимо список точок
+        point_list = []
+        # Робимо кортеж типів відрізків: PAUSE - 0, WORK - 1
+        (PAUSE, WORK) = (0, 1)
+        mid_work_ls = WorkLineSegment(Point(begin_point.time), Point(end_point.time))
+        last_ls = WorkLineSegment(Point(end_point.time - 1), Point(end_point.time))
+        for ls in downtimes:
+            mid_work_ls._B = ls._A
+            point_list.append(("Work", mid_work_ls._A, mid_work_ls._B))
+            point_list.append(("Pause", ls._A, ls._B))
+            mid_work_ls._A = ls._B
+            last_ls._A = ls._B
+        point_list.append(("Work", last_ls._A, last_ls._B))
+        print("point_list", point_list)
+
     elif not downtimes and pause and resume is None:
         print("Work with pause")
+        point_list = [('Work', Point(1), Point(3)), ('Pause', Point(3), Point(5)), ('Work', Point(5), Point(8)),
+                      ('Pause', Point(8), Point(9)), ('Work', Point(9), Point(11))]
+        # Якщо пауза припадає на робочий період, то останній робочій період в кінцевому результаті (timegraph)
+        # має закінчуватися на цьому timestamp.
+
+        for point_item in point_list:
+            print(point_item[0], point_item[1], point_item[2])
+            if point_item[0] == "Work" and pause <= point_item[2]:
+                if pause < point_item[2]:
+                    tuple_for_time_graph = ("Work", point_item[1], pause)
+                    timegraph.append(tuple_for_time_graph)
+                    break
+            elif point_item[0] == "Pause" and pause <= point_item[2]:
+                pass
+            else:
+                timegraph.append(point_item[2])
     elif not downtimes and pause is None and resume:
         print("Work with resume")
-    res = []
+
     print("Фініш")
