@@ -6,6 +6,9 @@
 import config
 import datetime
 from abc import ABC
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_protect
+from forms import PauseForm
 
 # common.ee()
 
@@ -67,6 +70,10 @@ class LineSegment(ABC):
         """оператор порівняння менше рівне"""
         return self.length() <= other.length()
 
+    def __lt__(self, other):
+        """оператор порівняння менше"""
+        return self.length() <= other.length()
+
     def set_type(self):
         """задати тип відрізка - фабричний метод"""
         raise AttributeError('Not Implemented type')
@@ -82,6 +89,19 @@ class PauseLineSegment(LineSegment):
     """Відрізок паузи"""
     def set_type(self):
         self.type_ls = "Pause"
+
+
+@csrf_protect
+def index(request):
+    if request.method == 'POST':
+        # create a form instance and populate it with data from the request:
+        form = PauseForm(request.POST)
+        if form.is_valid():
+            value_pause = form.changed_data["pause"]
+            return render(request, "result.html", {"value_pause": value_pause})
+    else:
+        form = PauseForm()
+    return render(request, "index.html", {"form": form})
 
 
 if __name__ == "__main__":
