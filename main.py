@@ -97,7 +97,7 @@ def index(request):
         # create a form instance and populate it with data from the request:
         form = PauseForm(request.POST)
         if form.is_valid():
-            value_pause = form.changed_data["pause"]
+            value_pause = form.cleaned_data["pause"]
             return render(request, "result.html", {"value_pause": value_pause})
     else:
         form = PauseForm()

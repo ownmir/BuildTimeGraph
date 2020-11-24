@@ -5,9 +5,13 @@
   <title>Form</title>
 </head>
 <body><h1>It works!</h1>
-<form action="#" method="post"
+<form action="/cgi-bin/form.py" method="post">
  {% csrf_token %}
  {{ form }}
+    <br>
+    <label for="pause">Input number</label>
+    <input type="range" min="3" max="8" name="pause">
+
  <input type="submit" name="submit" value="Submit" />
 </form>
 </body></html>
