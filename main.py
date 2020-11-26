@@ -6,9 +6,11 @@
 import config
 import datetime
 from abc import ABC
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_protect
-from forms import PauseForm
+# from django.shortcuts import render
+# from django.views.decorators.csrf import csrf_protect
+# from forms import PauseForm
+import http.client
+import urllib.parse
 
 # common.ee()
 
@@ -39,6 +41,10 @@ class Point(ABC):
     def __le__(self, other):
         """операція порівняння менше рівне"""
         return self.time <= other.time
+
+    def __lt__(self, other):
+        """операція порівняння менше"""
+        return self.time < other.time
 
     def __sub__(self, other):
         """операція віднімання"""
@@ -72,7 +78,7 @@ class LineSegment(ABC):
 
     def __lt__(self, other):
         """оператор порівняння менше"""
-        return self.length() <= other.length()
+        return self.length() < other.length()
 
     def set_type(self):
         """задати тип відрізка - фабричний метод"""
@@ -91,17 +97,17 @@ class PauseLineSegment(LineSegment):
         self.type_ls = "Pause"
 
 
-@csrf_protect
-def index(request):
-    if request.method == 'POST':
-        # create a form instance and populate it with data from the request:
-        form = PauseForm(request.POST)
-        if form.is_valid():
-            value_pause = form.cleaned_data["pause"]
-            return render(request, "result.html", {"value_pause": value_pause})
-    else:
-        form = PauseForm()
-    return render(request, "index.html", {"form": form})
+# @csrf_protect
+# def index(request):
+#     if request.method == 'POST':
+#         # create a form instance and populate it with data from the request:
+#         form = PauseForm(request.POST)
+#         if form.is_valid():
+#             value_pause = form.cleaned_data["pause"]
+#             return render(request, "result.html", {"value_pause": value_pause})
+#     else:
+#         form = PauseForm()
+#     return render(request, "index.html", {"form": form})
 
 
 if __name__ == "__main__":
@@ -171,6 +177,20 @@ if __name__ == "__main__":
         # Якщо пауза припадає на робочий період, то останній робочій період в кінцевому результаті (timegraph)
         # має закінчуватися на цьому timestamp.
 
+        params = urllib.parse.urlencode(
+            {'@pause': 4}
+        )
+        headers = {"Content-type": "application/x-www-form-urlencoded",
+                   "Accept": "text/plain"}
+        conn = http.client.HTTPConnection("127.0.0.1", port=8080)
+        conn.request("POST", "/cgi-bin/form.py", params, headers)
+        response = conn.getresponse()
+        print(response.status, response.reason)
+
+        data = response.read()
+        print(data)
+
+        conn.close()
         for point_item in point_list:
             print(point_item[0], point_item[1], point_item[2])
             if point_item[0] == "Work" and pause <= point_item[2]:

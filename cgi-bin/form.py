@@ -16,3 +16,7 @@ print("<p>pause: {}</p>".format(pause))
 
 print("""</body>
         </html>""")
+# with open('presult', 'w', encoding="utf-8") as f:
+#     print(pause, file=f)
+#
+# import wf
