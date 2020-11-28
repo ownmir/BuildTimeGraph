@@ -1,7 +1,7 @@
 ﻿import cgi
 
 form = cgi.FieldStorage()
-pause = form.getfirst("pause", 3)
+pause = form["pause"]
 print("Content-type: text/html\n")
 print("""<!DOCTYPE HTML>
         <html>

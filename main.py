@@ -11,6 +11,8 @@ from abc import ABC
 # from forms import PauseForm
 import http.client
 import urllib.parse
+import json
+
 
 # common.ee()
 
@@ -19,6 +21,7 @@ class Point(ABC):
     """
     timestamp в секундах
     """
+
     def __init__(self, time):
         if not isinstance(time, int):
             raise TypeError('Arg must be integer.')
@@ -52,6 +55,16 @@ class Point(ABC):
 
     def __repr__(self):
         return "Point " + str(self._time)
+
+    def get_json(self):
+        return json.dumps({"time": self.time})
+
+
+class PointEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Point):
+            return {"time": obj.time}
+        return json.JSONEncoder.default(self, obj)
 
 
 class LineSegment(ABC):
@@ -87,14 +100,40 @@ class LineSegment(ABC):
 
 class WorkLineSegment(LineSegment):
     """Відрізок роботи"""
+
     def set_type(self):
         self.type_ls = "Work"
+
+    def get_json(self):
+        """Представлення в json відрізка роботи"""
+        o = '{'
+        cl = '}'
+        return json.dumps('{0}"type_ls": "Work", "A": {1}, "B": {2}{3}'.format(o, self._A.get_json(),
+                                                                                self._B.get_json(), cl))
+
+
+class WorkLineSegmentEncoder(json.JSONEncoder):
+    def for_point(self, point):
+        return {"time": point.time}
+
+    def default(self, obj):
+        if isinstance(obj, WorkLineSegment):
+            return {"type_ls": "Work", "A": self.for_point(obj._A), "B": self.for_point(obj._B)}
+        return json.JSONEncoder.default(self, obj)
 
 
 class PauseLineSegment(LineSegment):
     """Відрізок паузи"""
+
     def set_type(self):
         self.type_ls = "Pause"
+
+    def get_json(self):
+        """Представлення в json відрізка паузи"""
+        o = '{'
+        cl = '}'
+        return json.dumps('{0}"type_ls": "Pause", "A": {1}, "B": {2}{3}'.format(o, self._A.get_json(),
+                                                                                self._B.get_json(), cl))
 
 
 # @csrf_protect
@@ -116,6 +155,8 @@ if __name__ == "__main__":
     line_segment1 = WorkLineSegment(Point(1165615616551), Point(1165615616552))
     line_segment1.set_type()
     print("Type", line_segment1.type_ls)
+    # print("line_segment1 json.dumps", line_segment1.get_json())
+    # print("line_segment1 json.dumps with WorkLineSegmentEncoder", json.dumps(line_segment1, indent=2, cls=WorkLineSegmentEncoder))
 
     # Результат
     timegraph = []
@@ -124,7 +165,9 @@ if __name__ == "__main__":
     # ==========
 
     # 1.	Timestamp початку
+    # begin_point = Point(1)
     begin_point = Point(1)
+    print("begin_point json.dumps", begin_point.get_json())
     # 2.	Чи час виконання в годинах, чи ні (inHours, boolean)
     in_hours = False
     #
@@ -147,11 +190,11 @@ if __name__ == "__main__":
     # downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
     downtimes = []
     # 2.	Timestamp паузи
-    # pause = None  # or pause = Point(3)  # or pause = Point(8)
-    pause = Point(3)
+    pause = None  # or pause = Point(3)  # or pause = Point(8)
+    # pause = Point(6)
     # 3.	Timestamp відновлення (resume)
-    resume = None  # or  resume = Point(5)  # or resume = Point(9)
-    # resume = Point(5)
+    # resume = None  # or  resume = Point(5)  # or resume = Point(9)
+    resume = Point(5)
     # =======
     if downtimes and pause is None and resume is None:
         print("Work with downtimes")
@@ -178,13 +221,14 @@ if __name__ == "__main__":
         # має закінчуватися на цьому timestamp.
 
         params = urllib.parse.urlencode(
-            {'@pause': 4}
+            {'pause': pause.time}
         )
         headers = {"Content-type": "application/x-www-form-urlencoded",
                    "Accept": "text/plain"}
         conn = http.client.HTTPConnection("127.0.0.1", port=8080)
         conn.request("POST", "/cgi-bin/form.py", params, headers)
         response = conn.getresponse()
+
         print(response.status, response.reason)
 
         data = response.read()
@@ -198,11 +242,38 @@ if __name__ == "__main__":
                     tuple_for_time_graph = ("Work", point_item[1], pause)
                     timegraph.append(tuple_for_time_graph)
                     break
+                else:
+                    timegraph.append(point_item)
             elif point_item[0] == "Pause" and pause <= point_item[2]:
-                pass
+                # Якщо пауза припадає на неробочий період, то останній робочій період в timegraph має бути той,
+                # який передував цьому неробочому періоду.
+                tuple_for_time_graph = ("Pause", point_item[1], pause)
+                timegraph.append(tuple_for_time_graph)
+                break
             else:
-                timegraph.append(point_item[2])
+                timegraph.append(point_item)
+        print("Time-graph", timegraph)
+        print(json.dumps(timegraph, indent=2, cls=PointEncoder))
     elif not downtimes and pause is None and resume:
         print("Work with resume")
-
+        point_list = [('Work', Point(1), Point(3)), ('Pause', Point(3), Point(5)), ('Work', Point(5), Point(8)),
+                      ('Pause', Point(8), Point(9)), ('Work', Point(9), Point(11))]
+        for point_item in point_list:
+            print(point_item[0], point_item[1], point_item[2])
+            if point_item[0] == "Work" and resume <= point_item[2]:
+                if resume < point_item[2]:
+                    tuple_for_time_graph = ("Work", point_item[1], resume)
+                    timegraph.append(tuple_for_time_graph)
+                    break
+                else:
+                    timegraph.append(point_item)
+            elif point_item[0] == "Pause" and resume <= point_item[2]:
+                if resume < point_item[2]:
+                    tuple_for_time_graph = ("Pause", point_item[1], resume)
+                    timegraph.append(tuple_for_time_graph)
+                    break
+            else:
+                timegraph.append(point_item)
+        print("Time-graph", timegraph)
+        # print(json.dumps(timegraph, indent=2, cls=PointEncoder))
     print("Фініш")
