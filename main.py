@@ -5,6 +5,7 @@
 # import common
 import config
 import datetime
+import sys
 from abc import ABC
 # from django.shortcuts import render
 # from django.views.decorators.csrf import csrf_protect
@@ -149,6 +150,16 @@ class PauseLineSegment(LineSegment):
 #     return render(request, "index.html", {"form": form})
 
 
+def objects_from_json(par_json):
+    res = json.loads(par_json)
+    print(res)
+    return res
+
+
+def downtimes_do(par_json):
+    downtimes = objects_from_json(par_json)
+
+
 if __name__ == "__main__":
     print("Початок")
     print("Time good", Point(1165615616551))
@@ -187,14 +198,24 @@ if __name__ == "__main__":
     # --------------
 
     # 1.	Один, або декілька неробочих періодів (downtimes)
-    # downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
-    downtimes = []
+    try:
+        arg_downtimes = sys.argv[1]
+        for_load_downtimes = arg_downtimes
+    except IndexError:
+        for_load_downtimes = '{"PauseLineSegment1": {"Point1": {"time": 3}, "Point2": {"time": 5}}, ' \
+                             '"PauseLineSegment2": {"Point1": {"time": 8}, "Point1": {"time": 9}}}'
+    downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
+    # downtimes = []
+    print("for_load_downtimes[19]", for_load_downtimes[10:19])
+    downtimes_j = json.loads(for_load_downtimes)
+    print("load from json", downtimes_j)
+
     # 2.	Timestamp паузи
     pause = None  # or pause = Point(3)  # or pause = Point(8)
     # pause = Point(6)
     # 3.	Timestamp відновлення (resume)
-    # resume = None  # or  resume = Point(5)  # or resume = Point(9)
-    resume = Point(5)
+    resume = None  # or  resume = Point(5)  # or resume = Point(9)
+    # resume = Point(10)
     # =======
     if downtimes and pause is None and resume is None:
         print("Work with downtimes")
@@ -272,6 +293,8 @@ if __name__ == "__main__":
                     tuple_for_time_graph = ("Pause", point_item[1], resume)
                     timegraph.append(tuple_for_time_graph)
                     break
+                else:
+                    timegraph.append(point_item)
             else:
                 timegraph.append(point_item)
         print("Time-graph", timegraph)
