@@ -206,7 +206,7 @@ if __name__ == "__main__":
                              '"PauseLineSegment2": {"Point1": {"time": 8}, "Point2": {"time": 9}}}'
     downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
     # downtimes = []
-    print("for_load_downtimes[19]", for_load_downtimes[10:19])
+    # print("for_load_downtimes[19]", for_load_downtimes[10:19])
     downtimes_j = json.loads(for_load_downtimes)
     print("load from json", downtimes_j, type(downtimes_j))
     # {'PauseLineSegment1': {'Point1': {'time': 3}, 'Point2': {'time': 5}}, 'PauseLineSegment2': {'Point1': {'time': 8}, 'Point2': {'time': 9}}}
@@ -217,9 +217,15 @@ if __name__ == "__main__":
         # проход по словарю 2 поинта
         for key, value in points.items():
             print("key", key, "value", value, "value[time]", value["time"])
-            pause_time_list.append(value["time"])
-
+            # pause_time_list.append(value["time"])  # tuple(key, value["time"])
+            pause_time_list.append((key, value["time"],))  # tuple(key, value["time"])
     print("pause_time_list", pause_time_list)
+    downtimes2 = []
+    for pause_time in pause_time_list:
+        print("pause_time", pause_time)
+        # downtimes2.append(PauseLineSegment(Point(pause_time[0][1]), Point(pause_time[1][1])))
+
+    print("downtimes2", downtimes2)
     # 2.	Timestamp паузи
     pause = None  # or pause = Point(3)  # or pause = Point(8)
     # pause = Point(6)
