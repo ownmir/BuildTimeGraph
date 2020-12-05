@@ -177,8 +177,8 @@ if __name__ == "__main__":
 
     # 1.	Timestamp початку
     # begin_point = Point(1)
-    begin_point = Point(1)
-    print("begin_point json.dumps", begin_point.get_json())
+    begin_point = 1
+    print("begin_point json.dumps", begin_point)
     # 2.	Чи час виконання в годинах, чи ні (inHours, boolean)
     in_hours = False
     #
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     else:
         # 3 Timestamp закінчення
-        end_point = Point(11)
+        end_point = 11
         # Тривалисть
         duration = end_point - begin_point
 
@@ -202,63 +202,74 @@ if __name__ == "__main__":
         arg_downtimes = sys.argv[1]
         for_load_downtimes = arg_downtimes
     except IndexError:
-        for_load_downtimes = '{"PauseLineSegment1": {"Point1": {"time": 3}, "Point2": {"time": 5}}, ' \
-                             '"PauseLineSegment2": {"Point1": {"time": 8}, "Point2": {"time": 9}}}'
-    downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
-    # downtimes = []
+        for_load_downtimes = '[ ["Pause", 3, 5], ["Pause", 8, 9] ]'
+        # for_load_downtimes = '{"PauseLineSegment1": {"Point1": {"time": 3}, "Point2": {"time": 5}}, ' \
+        #                      '"PauseLineSegment2": {"Point1": {"time": 8}, "Point2": {"time": 9}}}'
+    # downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
+    downtimes = []
     # print("for_load_downtimes[19]", for_load_downtimes[10:19])
     downtimes_j = json.loads(for_load_downtimes)
     print("load from json", downtimes_j, type(downtimes_j))
     # {'PauseLineSegment1': {'Point1': {'time': 3}, 'Point2': {'time': 5}}, 'PauseLineSegment2': {'Point1': {'time': 8}, 'Point2': {'time': 9}}}
-    pause_time_list = []
+    #pause_time_list = []
     # проход по словарю несколько паузлайнсегмент
-    for pls_key, points in downtimes_j.items():
-        print("pls_key", pls_key, "pls_value", points)
-        # проход по словарю 2 поинта
-        for key, value in points.items():
-            print("key", key, "value", value, "value[time]", value["time"])
-            # pause_time_list.append(value["time"])  # tuple(key, value["time"])
-            pause_time_list.append((key, value["time"],))  # tuple(key, value["time"])
-    print("pause_time_list", pause_time_list)
-    downtimes2 = []
-    for pause_time in pause_time_list:
-        print("pause_time", pause_time)
+    # for pls_key, points in downtimes_j.items():
+    #     print("pls_key", pls_key, "pls_value", points)
+    #     # проход по словарю 2 поинта
+    #     for key, value in points.items():
+    #         print("key", key, "value", value, "value[time]", value["time"])
+    #         # pause_time_list.append(value["time"])  # tuple(key, value["time"])
+    #         pause_time_list.append((key, value["time"],))  # tuple(key, value["time"])
+    # print("pause_time_list", pause_time_list)
+    # downtimes2 = []
+    # for pause_time in pause_time_list:
+    #     print("pause_time", pause_time)
+
         # downtimes2.append(PauseLineSegment(Point(pause_time[0][1]), Point(pause_time[1][1])))
 
-    print("downtimes2", downtimes2)
+    # print("downtimes2", downtimes2)
     # 2.	Timestamp паузи
-    pause = None  # or pause = Point(3)  # or pause = Point(8)
+    pause = None # or pause = 3 Point(3)  # or pause = 8 Point(8)
     # pause = Point(6)
+    # pause = 6
     # 3.	Timestamp відновлення (resume)
-    resume = None  # or  resume = Point(5)  # or resume = Point(9)
+    # resume = None  # or  resume = Point(5)  # or resume = Point(9)
     # resume = Point(10)
+    resume = 10
     # =======
     if downtimes and pause is None and resume is None:
         print("Work with downtimes")
         # Робимо список точок
         point_list = []
-        # Робимо кортеж типів відрізків: PAUSE - 0, WORK - 1
-        (PAUSE, WORK) = (0, 1)
-        mid_work_ls = WorkLineSegment(Point(begin_point.time), Point(end_point.time))
-        last_ls = WorkLineSegment(Point(end_point.time - 1), Point(end_point.time))
-        for ls in downtimes:
-            mid_work_ls._B = ls._A
-            point_list.append(("Work", mid_work_ls._A, mid_work_ls._B))
-            point_list.append(("Pause", ls._A, ls._B))
-            mid_work_ls._A = ls._B
-            last_ls._A = ls._B
-        point_list.append(("Work", last_ls._A, last_ls._B))
+        mid_work_ls = ["Work", begin_point, end_point]
+        last_ls = ["Work", (end_point - 1), end_point]
+        # [['Pause', 3, 5], ['Pause', 8, 9]]
+        for ls in downtimes_j:
+            # mid_work_ls._B = ls._A
+            mid_work_ls[2] = ls[1]
+            # point_list.append(("Work", mid_work_ls._A, mid_work_ls._B))
+            point_list.append(("Work", mid_work_ls[1], mid_work_ls[2]))
+            # point_list.append(("Pause", ls._A, ls._B))
+            point_list.append(("Pause", ls[1], ls[2]))
+            # mid_work_ls._A = ls._B
+            mid_work_ls[1] = ls[2]
+            # last_ls._A = ls._B
+            last_ls[1] = ls[2]
+        # point_list.append(("Work", last_ls._A, last_ls._B))
+        point_list.append(("Work", last_ls[1], last_ls[2]))
         print("point_list", point_list)
+        point_list_json = json.dumps(point_list)
+        print("point_list_json", point_list_json)
 
     elif not downtimes and pause and resume is None:
         print("Work with pause")
-        point_list = [('Work', Point(1), Point(3)), ('Pause', Point(3), Point(5)), ('Work', Point(5), Point(8)),
-                      ('Pause', Point(8), Point(9)), ('Work', Point(9), Point(11))]
+
+        point_list = [['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]
         # Якщо пауза припадає на робочий період, то останній робочій період в кінцевому результаті (timegraph)
         # має закінчуватися на цьому timestamp.
 
         params = urllib.parse.urlencode(
-            {'pause': pause.time}
+            {'pause': pause}
         )
         headers = {"Content-type": "application/x-www-form-urlencoded",
                    "Accept": "text/plain"}
