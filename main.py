@@ -199,17 +199,24 @@ if __name__ == "__main__":
 
     # 1.	Один, або декілька неробочих періодів (downtimes)
     try:
+        # start python -i main.py """[['Pause',3,5],['Pause',8,9]]""" 'null' 'null'
         arg_downtimes = sys.argv[1]
         for_load_downtimes = arg_downtimes
+        downtimes = arg_downtimes
+        print('for_load_downtimes', for_load_downtimes, 'type', type(for_load_downtimes))
+        pause = json.loads(sys.argv[2])
+        print('pause', pause, 'type', type(pause))
+        resume = sys.argv[3]
+        print('resume', for_load_downtimes, 'resume', type(resume))
     except IndexError:
         for_load_downtimes = '[ ["Pause", 3, 5], ["Pause", 8, 9] ]'
         # for_load_downtimes = '{"PauseLineSegment1": {"Point1": {"time": 3}, "Point2": {"time": 5}}, ' \
         #                      '"PauseLineSegment2": {"Point1": {"time": 8}, "Point2": {"time": 9}}}'
     # downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
-    downtimes = []
+    ## downtimes = []
     # print("for_load_downtimes[19]", for_load_downtimes[10:19])
-    downtimes_j = json.loads(for_load_downtimes)
-    print("load from json", downtimes_j, type(downtimes_j))
+    ## downtimes_j = json.loads(for_load_downtimes)
+    ## print("load from json", downtimes_j, type(downtimes_j))
     # {'PauseLineSegment1': {'Point1': {'time': 3}, 'Point2': {'time': 5}}, 'PauseLineSegment2': {'Point1': {'time': 8}, 'Point2': {'time': 9}}}
     #pause_time_list = []
     # проход по словарю несколько паузлайнсегмент
@@ -229,13 +236,13 @@ if __name__ == "__main__":
 
     # print("downtimes2", downtimes2)
     # 2.	Timestamp паузи
-    pause = None # or pause = 3 Point(3)  # or pause = 8 Point(8)
+    # pause = None  # or pause = 3 Point(3)  # or pause = 8 Point(8)
     # pause = Point(6)
     # pause = 6
     # 3.	Timestamp відновлення (resume)
     # resume = None  # or  resume = Point(5)  # or resume = Point(9)
     # resume = Point(10)
-    resume = 10
+    # resume = 10
     # =======
     if downtimes and pause is None and resume is None:
         print("Work with downtimes")
@@ -263,8 +270,14 @@ if __name__ == "__main__":
 
     elif not downtimes and pause and resume is None:
         print("Work with pause")
+        try:
+            arg_pause = sys.argv[2]
+            for_load_pause = arg_pause
+        except IndexError:
+            point_list_j = [['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]
+            for_load_pause = '[["Work", 1, 3], ["Pause", 3, 5], ["Work", 5, 8], ["Pause", 8, 9], ["Work", 9, 11]]'
+        point_list = json.loads(for_load_pause)
 
-        point_list = [['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]
         # Якщо пауза припадає на робочий період, то останній робочій період в кінцевому результаті (timegraph)
         # має закінчуватися на цьому timestamp.
 
@@ -304,8 +317,13 @@ if __name__ == "__main__":
         print(json.dumps(timegraph, indent=2, cls=PointEncoder))
     elif not downtimes and pause is None and resume:
         print("Work with resume")
-        point_list = [('Work', Point(1), Point(3)), ('Pause', Point(3), Point(5)), ('Work', Point(5), Point(8)),
-                      ('Pause', Point(8), Point(9)), ('Work', Point(9), Point(11))]
+        try:
+            arg_resume = sys.argv[3]
+            for_load_resume = arg_resume
+        except IndexError:
+            point_list_j = [['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]
+            for_load_resume = '[["Work", 1, 3], ["Pause", 3, 5], ["Work", 5, 8], ["Pause", 8, 9], ["Work", 9, 11]]'
+        point_list = json.loads(for_load_resume)
         for point_item in point_list:
             print(point_item[0], point_item[1], point_item[2])
             if point_item[0] == "Work" and resume <= point_item[2]:
