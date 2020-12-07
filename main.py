@@ -162,12 +162,6 @@ def downtimes_do(par_json):
 
 if __name__ == "__main__":
     print("Початок")
-    print("Time good", Point(1165615616551))
-    line_segment1 = WorkLineSegment(Point(1165615616551), Point(1165615616552))
-    line_segment1.set_type()
-    print("Type", line_segment1.type_ls)
-    # print("line_segment1 json.dumps", line_segment1.get_json())
-    # print("line_segment1 json.dumps with WorkLineSegmentEncoder", json.dumps(line_segment1, indent=2, cls=WorkLineSegmentEncoder))
 
     # Результат
     timegraph = []
@@ -177,11 +171,31 @@ if __name__ == "__main__":
 
     # 1.	Timestamp початку
     # begin_point = Point(1)
-    begin_point = 1
-    print("begin_point json.dumps", begin_point)
+    try:
+        arg_begin_point = sys.argv[1]
+        try:
+            begin_point = json.loads(arg_begin_point)
+        except json.JSONDecodeError:
+            print("Error! No argument 1")
+            # return """['Error', 'No argument 1']"""
+    except IndexError:
+        arg_begin_point = """1"""
+        begin_point = json.loads(arg_begin_point)
+        # return """['Error', 'Loads argument 1']"""
+    # begin_point = 1
+    print("begin_point", begin_point)
     # 2.	Чи час виконання в годинах, чи ні (inHours, boolean)
-    in_hours = False
-    #
+    try:
+        arg_in_hours = sys.argv[2]
+        try:
+            in_hours = json.loads(arg_in_hours)
+        except json.JSONDecodeError:
+            print("Error! Loads argument 2")
+            print("""['Error', 'No argument 1']""")
+            sys.exit(1)
+    except IndexError:
+        in_hours = False
+        # return """['Error', 'No argument 2']"""
     if in_hours:
         print("Duration in hours.")
         end_point = None
@@ -189,7 +203,17 @@ if __name__ == "__main__":
 
     else:
         # 3 Timestamp закінчення
-        end_point = 11
+        try:
+            arg_end_point = sys.argv[3]
+            try:
+                end_point = json.loads(arg_end_point)
+            except json.JSONDecodeError:
+                print("Error! Loads argument 3")
+                # return """['Error', 'No argument 3']"""
+        except IndexError:
+            end_point = 11
+            # return """['Error', 'No argument 3']"""
+        # end_point = 11
         # Тривалисть
         duration = end_point - begin_point
 
@@ -199,17 +223,30 @@ if __name__ == "__main__":
 
     # 1.	Один, або декілька неробочих періодів (downtimes)
     try:
-        # start python -i main.py """[['Pause',3,5],['Pause',8,9]]""" 'null' 'null'
-        arg_downtimes = sys.argv[1]
+        # start python -i main.py """[['Pause',3,5],['Pause',8,9]]""" """null""" """null"""
+        arg_downtimes = sys.argv[4]
         for_load_downtimes = arg_downtimes
         downtimes = arg_downtimes
-        print('for_load_downtimes', for_load_downtimes, 'type', type(for_load_downtimes))
-        pause = json.loads(sys.argv[2])
-        print('pause', pause, 'type', type(pause))
-        resume = sys.argv[3]
-        print('resume', for_load_downtimes, 'resume', type(resume))
+        print('arg_downtimes', arg_downtimes, 'type', type(arg_downtimes))
     except IndexError:
         for_load_downtimes = '[ ["Pause", 3, 5], ["Pause", 8, 9] ]'
+        print("Error! No arguments! Using", for_load_downtimes)
+        downtimes = json.loads(for_load_downtimes)
+    try:
+        arg_pause = sys.argv[5]
+        try:
+            pause = json.loads(arg_pause)
+            print('pause', pause, 'type', type(pause))
+        except json.JSONDecodeError as pause_error:
+            print("Error in loads JSON", pause_error)
+    except IndexError:
+        pause = None
+    try:
+        arg_resume = sys.argv[6]
+        resume = json.loads(arg_resume)
+        print('resume', resume, 'type', type(resume))
+    except IndexError:
+        resume = None
         # for_load_downtimes = '{"PauseLineSegment1": {"Point1": {"time": 3}, "Point2": {"time": 5}}, ' \
         #                      '"PauseLineSegment2": {"Point1": {"time": 8}, "Point2": {"time": 9}}}'
     # downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
@@ -251,7 +288,7 @@ if __name__ == "__main__":
         mid_work_ls = ["Work", begin_point, end_point]
         last_ls = ["Work", (end_point - 1), end_point]
         # [['Pause', 3, 5], ['Pause', 8, 9]]
-        for ls in downtimes_j:
+        for ls in downtimes:
             # mid_work_ls._B = ls._A
             mid_work_ls[2] = ls[1]
             # point_list.append(("Work", mid_work_ls._A, mid_work_ls._B))
