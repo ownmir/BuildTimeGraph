@@ -6,6 +6,7 @@
 import config
 import datetime
 import sys
+import os
 from abc import ABC
 # from django.shortcuts import render
 # from django.views.decorators.csrf import csrf_protect
@@ -160,9 +161,25 @@ def downtimes_do(par_json):
     downtimes = objects_from_json(par_json)
 
 
-if __name__ == "__main__":
-    print("Початок")
+def hand_exit(json_str, code):
+    
+    if code < 40 or code > 69:
+        print(json_str)
+    sys.exit(code)
+    # try:
+    #     sys.exit(code)
+    # except SystemExit:
+    #     pass
 
+
+if __name__ == "__main__":
+    if config.DEBUG:
+        print("Початок")
+    else:
+        pass
+
+    # 
+    error_code = 0
     # Результат
     timegraph = []
 
@@ -176,28 +193,49 @@ if __name__ == "__main__":
         try:
             begin_point = json.loads(arg_begin_point)
         except json.JSONDecodeError:
-            print("Error! No argument 1")
-            # return """['Error', 'No argument 1']"""
+
+            if config.DEBUG:
+                begin_point = 1
+                print("Error! Wrong argument 1")
+            else:
+                begin_point = None
+                error_code = 11
+                hand_exit("""["Error", "Wrong argument 1"]""", 11)
     except IndexError:
-        arg_begin_point = """1"""
-        begin_point = json.loads(arg_begin_point)
-        # return """['Error', 'Loads argument 1']"""
-    # begin_point = 1
-    print("begin_point", begin_point)
+        if config.DEBUG:
+            arg_begin_point = """1"""
+            begin_point = json.loads(arg_begin_point)
+        else:
+            begin_point = None
+            error_code = 12
+            hand_exit("""["Error", "No argument 1"]""", 12)
+    #
+    if config.DEBUG:
+        if begin_point:
+            print("begin_point", begin_point)
     # 2.	Чи час виконання в годинах, чи ні (inHours, boolean)
     try:
         arg_in_hours = sys.argv[2]
         try:
             in_hours = json.loads(arg_in_hours)
         except json.JSONDecodeError:
-            print("Error! Loads argument 2")
-            print("""['Error', 'No argument 1']""")
-            sys.exit(1)
+            if config.DEBUG:
+                print("Error! Wrong argument 2")
+                in_hours = False
+            else:
+                in_hours = False
+                error_code = 21
+                hand_exit("""["Error", "Wrong argument 2"]""", 21)
+
     except IndexError:
-        in_hours = False
-        # return """['Error', 'No argument 2']"""
+        if config.DEBUG:
+            in_hours = False
+        else:
+            in_hours = False
+            hand_exit("""["Error", "No argument 2"]""", 22)
     if in_hours:
-        print("Duration in hours.")
+        if config.DEBUG:
+            print("Duration in hours.")
         end_point = None
         # Тривалисть
 
@@ -208,47 +246,120 @@ if __name__ == "__main__":
             try:
                 end_point = json.loads(arg_end_point)
             except json.JSONDecodeError:
-                print("Error! Loads argument 3")
-                # return """['Error', 'No argument 3']"""
+                if config.DEBUG:
+                    print("Error! Wrong argument 3", arg_end_point)
+                else:
+                    error_code = 31
+                    hand_exit("""["Error", "Wrong argument 3"]""", 31)
         except IndexError:
-            end_point = 11
+            if config.DEBUG:
+                print("Error! No argument 3")
+                end_point = 11
+            else:
+                hand_exit("""["Error", "No argument 3"]""", 32)
             # return """['Error', 'No argument 3']"""
         # end_point = 11
         # Тривалисть
-        duration = end_point - begin_point
+        try:
+            duration = end_point - begin_point
+        except NameError:
+            pass
 
     # --------------
     # optional input
     # --------------
-
+    if config.DEBUG:
+        print("sys.argv", sys.argv)
     # 1.	Один, або декілька неробочих періодів (downtimes)
     try:
-        # start python -i main.py """[['Pause',3,5],['Pause',8,9]]""" """null""" """null"""
+        # start python -i main.py 1 false 11 [[\"Pause\",3,5],[\"Pause\",8,9]] null null
+        # Notepad++:
+        # D:\Python377-32\python.exe -i "$(FULL_CURRENT_PATH)" "1" "false" "11" "[[\"Pause\",3,5],[\"Pause\",8,9]]" "null" "null"
         arg_downtimes = sys.argv[4]
+        if config.DEBUG:
+            print('arg_downtimes', arg_downtimes, 'type', type(arg_downtimes))
         for_load_downtimes = arg_downtimes
-        downtimes = arg_downtimes
-        print('arg_downtimes', arg_downtimes, 'type', type(arg_downtimes))
+        try:
+            downtimes = json.loads(for_load_downtimes)
+        except json.JSONDecodeError:
+            downtimes = None
+            if config.DEBUG:
+                print("Error! Wrong argument 4")
+            else:
+                error_code = 41
+                hand_exit("""["Error", "Wrong argument 4"]""", 41)
     except IndexError:
-        for_load_downtimes = '[ ["Pause", 3, 5], ["Pause", 8, 9] ]'
-        print("Error! No arguments! Using", for_load_downtimes)
-        downtimes = json.loads(for_load_downtimes)
+        if config.DEBUG:
+            for_load_downtimes = """[ ["Pause", 3, 5], ["Pause", 8, 9] ]"""
+            print("Error! No argument 4! Using", for_load_downtimes)
+            try:
+                downtimes = json.loads(for_load_downtimes)
+            except json.JSONDecodeError:
+                downtimes = None
+                if downtimes:
+                    pass
+                if config.DEBUG:
+                    print("Error! Wrong argument 4!")
+                else:
+                    error_code = 41
+                    hand_exit("""["Error", "Wrong argument 4"]""", 41)
+        else:
+            # TODO: что делать, если не заданы 4, 5, 6?
+            downtimes = None
+            error_code = 42
+            hand_exit("""["Error", "No argument 4"]""", 42)
     try:
         arg_pause = sys.argv[5]
         try:
             pause = json.loads(arg_pause)
-            print('pause', pause, 'type', type(pause))
+            if config.DEBUG:
+                print('pause', pause, 'type', type(pause))
         except json.JSONDecodeError as pause_error:
-            print("Error in loads JSON", pause_error)
+            pause = None
+            if config.DEBUG:
+                print("Error in loads JSON pause", pause_error)
+            else:
+                error_code = 51
+                hand_exit("""["Error", "Wrong argument 5"]""", 51)
     except IndexError:
         pause = None
+        if config.DEBUG:
+            pass
+        else:
+            # TODO: что делать, если не заданы 4, 5, 6?
+            error_code = 52
+            hand_exit("""["Error", "No argument 5"]""", 52)
     try:
         arg_resume = sys.argv[6]
-        resume = json.loads(arg_resume)
-        print('resume', resume, 'type', type(resume))
+        try:
+            resume = json.loads(arg_resume)
+            if config.DEBUG:
+                print('resume', resume, 'type', type(resume))
+        except json.JSONDecodeError as resume_error:
+            resume = None
+            if config.DEBUG:
+                print("Error in loads JSON resume", resume_error)
+            else:
+                error_code = 61
+                hand_exit("""["Error", "Wrong argument 6"]""", 61)
     except IndexError:
         resume = None
+        if config.DEBUG:
+            pass
+        else:
+            # TODO: что делать, если не заданы 4, 5, 6?
+            error_code = 62
+            hand_exit("""["Error", "No argument 6"]""", 62)
         # for_load_downtimes = '{"PauseLineSegment1": {"Point1": {"time": 3}, "Point2": {"time": 5}}, ' \
         #                      '"PauseLineSegment2": {"Point1": {"time": 8}, "Point2": {"time": 9}}}'
+    # только один из 4-го, 5, 6 параметров могут быть определены (bool(x) ^ bool(y) ^ bool(z)) and not (bx == by == bz)
+    # ^ - исключающее или
+    if not ((bool(downtimes) ^ bool(pause) ^ bool(resume)) and not (bool(downtimes) == bool(pause) == bool(resume))):
+        if config.DEBUG:
+            print("Only one of 4, 5, 6 parameters can be defined")
+        else:
+            error_code = 71
+            hand_exit("""["Error", "Only one of 4, 5, 6 parameters can be defined"]""", 71)
     # downtimes = [PauseLineSegment(Point(3), Point(5)), PauseLineSegment(Point(8), Point(9))]
     ## downtimes = []
     # print("for_load_downtimes[19]", for_load_downtimes[10:19])
@@ -282,7 +393,8 @@ if __name__ == "__main__":
     # resume = 10
     # =======
     if downtimes and pause is None and resume is None:
-        print("Work with downtimes")
+        if config.DEBUG:
+            print("Work with downtimes")
         # Робимо список точок
         point_list = []
         mid_work_ls = ["Work", begin_point, end_point]
@@ -292,29 +404,28 @@ if __name__ == "__main__":
             # mid_work_ls._B = ls._A
             mid_work_ls[2] = ls[1]
             # point_list.append(("Work", mid_work_ls._A, mid_work_ls._B))
-            point_list.append(("Work", mid_work_ls[1], mid_work_ls[2]))
+            point_list.append(('Work', mid_work_ls[1], mid_work_ls[2]))
             # point_list.append(("Pause", ls._A, ls._B))
-            point_list.append(("Pause", ls[1], ls[2]))
+            point_list.append(('Pause', ls[1], ls[2]))
             # mid_work_ls._A = ls._B
             mid_work_ls[1] = ls[2]
             # last_ls._A = ls._B
             last_ls[1] = ls[2]
         # point_list.append(("Work", last_ls._A, last_ls._B))
-        point_list.append(("Work", last_ls[1], last_ls[2]))
-        print("point_list", point_list)
-        point_list_json = json.dumps(point_list)
-        print("point_list_json", point_list_json)
+        point_list.append(('Work', last_ls[1], last_ls[2]))
+        if config.DEBUG:
+            print("point_list", point_list)
+        # point_list_json = json.dumps(point_list)
+        timegraph = json.dumps(point_list)
+        if config.DEBUG:
+            print("timegraph", timegraph)
 
     elif not downtimes and pause and resume is None:
-        print("Work with pause")
-        try:
-            arg_pause = sys.argv[2]
-            for_load_pause = arg_pause
-        except IndexError:
-            point_list_j = [['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]
-            for_load_pause = '[["Work", 1, 3], ["Pause", 3, 5], ["Work", 5, 8], ["Pause", 8, 9], ["Work", 9, 11]]'
-        point_list = json.loads(for_load_pause)
-
+        if config.DEBUG:
+            print("Work with pause", pause)
+        point_list = [['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]
+        # for_dump_pause = """[['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]"""
+        
         # Якщо пауза припадає на робочий період, то останній робочій період в кінцевому результаті (timegraph)
         # має закінчуватися на цьому timestamp.
 
@@ -326,15 +437,17 @@ if __name__ == "__main__":
         conn = http.client.HTTPConnection("127.0.0.1", port=8080)
         conn.request("POST", "/cgi-bin/form.py", params, headers)
         response = conn.getresponse()
-
-        print(response.status, response.reason)
+        if config.DEBUG:
+            print(response.status, response.reason)
 
         data = response.read()
-        print(data)
+        if config.DEBUG:
+            print(data)
 
         conn.close()
         for point_item in point_list:
-            print(point_item[0], point_item[1], point_item[2])
+            if config.DEBUG:
+                print(point_item[0], point_item[1], point_item[2])
             if point_item[0] == "Work" and pause <= point_item[2]:
                 if pause < point_item[2]:
                     tuple_for_time_graph = ("Work", point_item[1], pause)
@@ -350,19 +463,18 @@ if __name__ == "__main__":
                 break
             else:
                 timegraph.append(point_item)
-        print("Time-graph", timegraph)
-        print(json.dumps(timegraph, indent=2, cls=PointEncoder))
+        if config.DEBUG:
+            print("Time-graph", timegraph)
+            print(json.dumps(timegraph, indent=2, cls=PointEncoder))
     elif not downtimes and pause is None and resume:
-        print("Work with resume")
-        try:
-            arg_resume = sys.argv[3]
-            for_load_resume = arg_resume
-        except IndexError:
-            point_list_j = [['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]
-            for_load_resume = '[["Work", 1, 3], ["Pause", 3, 5], ["Work", 5, 8], ["Pause", 8, 9], ["Work", 9, 11]]'
-        point_list = json.loads(for_load_resume)
+        if config.DEBUG:
+            print("Work with resume", resume)
+        point_list = [['Work', 1, 3], ['Pause', 3, 5], ['Work', 5, 8], ['Pause', 8, 9], ['Work', 9, 11]]
+        # for_load_resume = '[["Work", 1, 3], ["Pause", 3, 5], ["Work", 5, 8], ["Pause", 8, 9], ["Work", 9, 11]]'
+        # point_list = json.loads(for_load_resume)
         for point_item in point_list:
-            print(point_item[0], point_item[1], point_item[2])
+            if config.DEBUG:
+                print(point_item[0], point_item[1], point_item[2])
             if point_item[0] == "Work" and resume <= point_item[2]:
                 if resume < point_item[2]:
                     tuple_for_time_graph = ("Work", point_item[1], resume)
@@ -379,6 +491,12 @@ if __name__ == "__main__":
                     timegraph.append(point_item)
             else:
                 timegraph.append(point_item)
-        print("Time-graph", timegraph)
+        if config.DEBUG:
+            print("Time-graph", timegraph)
         # print(json.dumps(timegraph, indent=2, cls=PointEncoder))
-    print("Фініш")
+    if config.DEBUG:
+        print("Фініш")
+    else:
+        if error_code not in (11, 12, 21, 22, 31, 32, 41, 51, 61, 71):
+            hand_exit(json.dumps(timegraph), 0)
+        # print("Time-graph", timegraph)

@@ -1,4 +1,4 @@
-common module
+Модуль common
 =============
 
 .. automodule:: common

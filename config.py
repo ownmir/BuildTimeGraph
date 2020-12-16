@@ -1,7 +1,13 @@
 """
+
 Налаштування
+------------
+
+DEBUG - Ознака налагодження (True, False)
 """
-time_graph = []  # 
+
+DEBUG = False
+
 
 if __name__ == "__main__":
     pass

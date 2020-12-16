@@ -3,18 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Побудова тайм-графу's documentation!
-===============================================
+Документація Побудова тайм-графу
+================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Зміст:
+
+   setup
+
+   usage
 
    modules
 
 
-
-Indices and tables
+Індекси та таблиці
 ==================
 
 * :ref:`genindex`
